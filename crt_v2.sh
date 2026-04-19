@@ -27,7 +27,7 @@ Help() {
 # - Filters out email addresses.
 # - Sorts the results and removes duplicates.
 CleanResults() {
-    sed 's /\"//g' | \
+    sed 's/\"//g' | \
     sed 's/\\n/\n/g' | \
     sed 's/\*.//g' | \
     sed -r 's/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})//g' | \
@@ -46,16 +46,22 @@ Domain() {
         echo "Error: Domain name is required."
         exit 1
     fi
-    
-    # Perform the search request to crt.sh
-    response=$(curl -s "https://crt.sh?q=%.$req&output=json")
-    
-    # Check if the response is empty
-    if [ -z "$response" ]; then
-        echo "No results found for domain $req"
-        exit 1
-    fi
-    
+    is_timeout=1
+    while [ $is_timeout == 1 ] ;do
+        # Perform the search request to crt.sh
+        response=$(curl -s "https://crt.sh?q=%.$req&output=json")
+        
+        # Check if the response is empty
+        if [ -z "$response" ]; then
+            echo "No results found for domain $req"
+            exit 1
+        fi
+        is_timeout=$(echo $response | grep -E "502 Bad Gateway|404 Not Found" | wc -l)
+        if [ $is_timeout == 1 ];then
+            sleep 20
+        fi
+    done;
+
     # Process the response, clean it, and store the results
     results=$(echo "$response" | jq -r ".[].common_name,.[].name_value" | CleanResults)
     
