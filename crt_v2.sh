@@ -27,6 +27,7 @@ Help() {
 # - Filters out email addresses.
 # - Sorts the results and removes duplicates.
 CleanResults() {
+    sed 's /\"//g' | \
     sed 's/\\n/\n/g' | \
     sed 's/\*.//g' | \
     sed -r 's/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})//g' | \
